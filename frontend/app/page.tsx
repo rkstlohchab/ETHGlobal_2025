@@ -6,7 +6,7 @@ import {
   useReadContract,
   useWriteContract,
 } from "wagmi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const TOKEN_ADDRESS =
   process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`;
@@ -51,6 +51,12 @@ const tokenAbi = [
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [status, setStatus] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  // Only show the UI after component is mounted on the client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Read balance
   const { data: balance } = useReadContract({
@@ -95,6 +101,9 @@ export default function Home() {
       setStatus("❌ Error: " + (error.message ?? error.toString()));
     }
   }
+
+  // Don't render anything until mounted
+  if (!mounted) return null;
 
   return (
     <main className="p-6">
