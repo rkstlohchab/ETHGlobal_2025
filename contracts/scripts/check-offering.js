@@ -28,11 +28,7 @@ async function main() {
             const price = await offering.pricePerToken();
             console.log(`Price per token: ${hre.ethers.formatEther(price)} ETH`);
 
-            const isFinalized = await offering.finalized();
-            console.log(`Offering finalized: ${isFinalized}`);
-
-            const isCanceled = await offering.canceled();
-            console.log(`Offering canceled: ${isCanceled}`);
+            
 
         } catch (error) {
             console.error("Error checking contract:", error.message);

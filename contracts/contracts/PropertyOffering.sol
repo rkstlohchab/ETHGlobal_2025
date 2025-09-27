@@ -26,6 +26,15 @@ contract PropertyOffering is ReentrancyGuard {
     /// @dev Total ETH raised from the primary sale.
     uint256 public totalRaised;
 
+    /// @dev The fundraising goal in wei.
+    uint256 public goal;
+
+    /// @dev The deadline for the fundraising.
+    uint256 public deadline;
+
+    /// @dev Mapping from investor to their contribution amount.
+    mapping(address => uint256) public contributions;
+
     /// @dev Emitted when an investor buys tokens.
     event TokensPurchased(address indexed buyer, uint256 tokenAmount, uint256 paid);
 
@@ -47,18 +56,26 @@ contract PropertyOffering is ReentrancyGuard {
     error InvalidEtherSent();
     error InsufficientLiquidity();
     error Unauthorized();
+    error OfferingFinished();
+    error GoalNotReached();
+    error GoalReached();
 
     modifier onlySeller() {
         if (msg.sender != seller) revert Unauthorized();
         _;
     }
 
-    constructor(address token_, address seller_, uint256 pricePerToken_) {
+    constructor(address token_, address seller_, uint256 pricePerToken_, uint256 goal_, uint256 deadline_) {
         if (token_ == address(0) || seller_ == address(0)) revert InvalidZeroAddress();
         require(pricePerToken_ > 0, "Price must be positive");
+        require(goal_ > 0, "Goal must be positive");
+        require(deadline_ > block.timestamp, "Deadline must be in the future");
+
         token = IERC20(token_);
         seller = seller_;
         pricePerToken = pricePerToken_;
+        goal = goal_;
+        deadline = deadline_;
     }
 
     /// @notice Returns the number of tokens still held by the offering contract.
@@ -74,12 +91,14 @@ contract PropertyOffering is ReentrancyGuard {
     /// @notice Purchase `tokenAmount` tokens by sending the exact amount of ETH required.
     /// @param tokenAmount Amount of tokens (in smallest units) to purchase.
     function buy(uint256 tokenAmount) external payable nonReentrant {
+        if (block.timestamp > deadline) revert OfferingFinished();
         if (tokenAmount == 0) revert AmountTooSmall();
         uint256 cost = _priceForAmount(tokenAmount);
         if (msg.value != cost) revert InvalidEtherSent();
         if (availableSupply() < tokenAmount) revert InsufficientInventory();
 
         totalRaised += cost;
+        contributions[msg.sender] += cost;
         token.safeTransfer(msg.sender, tokenAmount);
 
         emit TokensPurchased(msg.sender, tokenAmount, cost);
@@ -110,13 +129,31 @@ contract PropertyOffering is ReentrancyGuard {
 
     /// @notice Withdraw ETH raised from primary sales. Does not impact liquidity for redemptions
     /// provided the owner leaves some balance in the contract.
-    function withdrawProceeds(uint256 amount) external onlySeller nonReentrant {
+    function withdrawProceeds() external onlySeller nonReentrant {
+        if (block.timestamp <= deadline) revert OfferingFinished();
+        if (totalRaised < goal) revert GoalNotReached();
+
+        uint256 amount = address(this).balance;
         if (amount == 0) revert AmountTooSmall();
-        if (address(this).balance < amount) revert InsufficientLiquidity();
+
         (bool ok, ) = payable(seller).call{value: amount}("");
         require(ok, "ETH transfer failed");
         emit ProceedsWithdrawn(seller, amount);
     }
+
+    /// @notice Claim a refund if the fundraising goal is not reached by the deadline.
+    function claimRefund() external nonReentrant {
+        if (block.timestamp <= deadline) revert OfferingFinished();
+        if (totalRaised >= goal) revert GoalReached();
+
+        uint256 amount = contributions[msg.sender];
+        if (amount == 0) revert AmountTooSmall();
+
+        contributions[msg.sender] = 0;
+        (bool ok, ) = payable(msg.sender).call{value: amount}("");
+        require(ok, "ETH transfer failed");
+    }
+
 
     /// @notice Deposit additional ETH to support secondary market sell orders.
     function depositLiquidity() external payable {

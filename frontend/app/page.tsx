@@ -25,8 +25,8 @@ export default function Home() {
                   Monitor tokenized properties, view real-time Pyth oracle valuations, and guide investors through the compliance journey. All compliance steps are mocked, so you can demonstrate the experience now and plug in a real KYC provider later.
                 </p>
               </div>
-              <ConnectPanel />
             </div>
+            <ConnectPanel />
             <MockComplianceGate />
           </div>
         </header>

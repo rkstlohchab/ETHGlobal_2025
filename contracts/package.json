@@ -30,6 +30,9 @@
     "@onchain-id/solidity": "^2.1.0",
     "@openzeppelin/contracts": "^4.9.3",
     "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
+    "@selfxyz/contracts": "^1.2.0",
+    "@selfxyz/core": "^1.0.8",
+    "@selfxyz/qrcode": "^1.0.11",
     "dotenv": "^17.2.2"
   }
 }

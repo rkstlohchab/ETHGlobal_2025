@@ -1,0 +1,17 @@
+{
+  "network": "sepolia",
+  "deployer": "0xe7C9Dd68a91e41a2831f4e2B868f647d13996942",
+  "timestamp": "2025-09-27T21:23:14.979Z",
+  "contracts": {
+    "proofOfHuman": "0xad92A16a7b3B11e20f13f6C4852fA5dA41917Af7",
+    "mockToken": "0xE38fc2e35De620F8933a7A9BBfCC49E9804f48Fd",
+    "propertyOffering": "0x1d1056A3d5B980015741f0A4D74580011E5455e5"
+  },
+  "configuration": {
+    "selfIdentityHubV2": "0x0000000000000000000000000000000000000001",
+    "scopeSeed": 12345,
+    "pricePerToken": "10000000000000000",
+    "goal": "10000000000000000000",
+    "deadline": "1761600181"
+  }
+}

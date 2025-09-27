@@ -29,6 +29,9 @@ export function PortfolioOverview() {
     return formatter.format(Number(price));
   }, [price]);
 
+  // Prevent hydration issues by showing consistent loading state
+  const isLoading = !mounted || loading;
+
   return (
     <section className="rounded-3xl border border-white/10 bg-gradient-to-tr from-cyan-500/10 via-transparent to-purple-500/10 p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -48,17 +51,17 @@ export function PortfolioOverview() {
         <div className="grid gap-4 sm:grid-cols-3">
           <MetricCard
             label="Token balance"
-            value={loading ? "Loading..." : balance ?? "0"}
+            value={isLoading ? "Loading..." : balance ?? "0"}
             tooltip="Current ERC-3643 token balance for this wallet."
           />
           <MetricCard
             label="USD valuation"
-            value={loading ? "Loading..." : formattedValue}
+            value={isLoading ? "Loading..." : formattedValue}
             tooltip="Balance converted using the latest Pyth oracle price."
           />
           <MetricCard
             label="ETH/USD (Pyth)"
-            value={loading ? "Loading..." : formattedPrice}
+            value={isLoading ? "Loading..." : formattedPrice}
             tooltip={`Last update: ${publishTime ?? "—"}`}
           />
         </div>
@@ -87,4 +90,3 @@ function MetricCard({
     </div>
   );
 }
-

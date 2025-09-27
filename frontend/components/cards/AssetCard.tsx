@@ -1,16 +1,26 @@
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { MockAsset } from "@/data/mockAssets";
 import { useOffering } from "@/hooks/useOffering";
+import { useSelfVerification } from "@/hooks/useSelfVerification";
 import { formatEther } from "viem";
 import { AssetBuyModal } from "@/components/modals/AssetBuyModal";
+import { useAccount } from "wagmi";
 
 export function AssetCard({ asset }: { asset: MockAsset }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  const { address } = useAccount();
+  const { verified, loading } = useSelfVerification();
   const { pricePerToken, totalRaised } = useOffering(
     asset.offeringAddress,
     asset.tokenAddress
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const raiseProgress = useMemo(() => {
     if (!totalRaised) return 0;
@@ -85,13 +95,50 @@ export function AssetCard({ asset }: { asset: MockAsset }) {
             ))}
           </div>
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto space-y-2">
+          {!mounted ? (
+            // Loading state to prevent hydration issues
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-center">
+              <p className="text-xs text-slate-400">Loading verification status...</p>
+            </div>
+          ) : !address ? (
+            <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-center">
+              <p className="text-xs text-amber-300">Connect wallet to invest</p>
+            </div>
+          ) : !verified ? (
+            <div className="rounded-lg border border-blue-400/20 bg-blue-400/5 p-3 text-center">
+              <p className="text-xs text-blue-300">Complete Self verification to invest</p>
+              <div className="mt-1 flex items-center justify-center gap-1">
+                <svg className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className="text-xs text-blue-200">Zero-knowledge KYC required</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-lg border border-green-400/20 bg-green-400/5 p-2">
+                <svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs text-green-300">Self verified ✓</span>
+              </div>
+            </div>
+          )}
+          
           <button
             onClick={() => setOpen(true)}
-            disabled={!asset.offeringAddress || asset.offeringAddress === "0x0000000000000000000000000000000000000000"}
+            disabled={
+              !mounted ||
+              !asset.offeringAddress || 
+              asset.offeringAddress === "0x0000000000000000000000000000000000000000" || 
+              !address || 
+              !verified ||
+              loading
+            }
             className="w-full rounded-full bg-cyan-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-900 shadow-md shadow-cyan-400/40 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
           >
-            Buy tokens
+            {!mounted ? "Loading..." : loading ? "Checking verification..." : verified ? "Buy tokens" : "Verification required"}
           </button>
         </div>
       </div>
@@ -104,4 +151,3 @@ export function AssetCard({ asset }: { asset: MockAsset }) {
     </article>
   );
 }
-
