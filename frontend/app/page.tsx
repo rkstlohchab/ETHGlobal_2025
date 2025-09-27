@@ -32,12 +32,12 @@ export default function Home() {
         </header>
 
         <Suspense fallback={<div className="text-slate-400">Loading analytics...</div>}>
-          <section className="grid gap-10 lg:grid-cols-[2fr_1fr]">
-            <div className="space-y-10">
-              <PortfolioOverview />
+          <section className="space-y-10">
+            <PortfolioOverview />
+            <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
               <AssetGrid />
+              <AssetInsights />
             </div>
-            <AssetInsights />
           </section>
         </Suspense>
       </div>

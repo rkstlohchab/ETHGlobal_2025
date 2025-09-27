@@ -10,7 +10,7 @@ export function AssetGrid() {
           <p className="text-sm text-slate-300">Curated opportunities ready for tokenized investment. Compliance is mocked; replace with live datasets later.</p>
         </div>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-2">
         {MOCK_ASSETS.map((asset) => (
           <AssetCard key={asset.id} asset={asset} />
         ))}

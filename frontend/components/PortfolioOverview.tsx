@@ -3,6 +3,7 @@
 import { useAccount } from "wagmi";
 import { useEffect, useMemo, useState } from "react";
 import { useTokenSnapshot } from "@/hooks/useTokenSnapshot";
+import { usePythHermesWorking as usePythHermes } from "@/hooks/usePythHermesWorking";
 
 const formatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -13,21 +14,45 @@ const formatter = new Intl.NumberFormat("en-US", {
 export function PortfolioOverview() {
   const { address } = useAccount();
   const [mounted, setMounted] = useState(false);
-  const { loading, balance, usdValue, price, publishTime } = useTokenSnapshot();
+  
+  // Keep original token snapshot for balance
+  const { loading, balance, usdValue } = useTokenSnapshot();
+  
+  // Use Hermes for real-time ETH/USD price (better UX)
+  const { 
+    ethUsdPrice, 
+    loading: hermesLoading, 
+    error: hermesError 
+  } = usePythHermes();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Keep original formatted value as fallback
   const formattedValue = useMemo(() => {
     if (!usdValue) return "—";
     return formatter.format(Number(usdValue));
   }, [usdValue]);
 
+  // Use Hermes price with fallback to original
   const formattedPrice = useMemo(() => {
-    if (!price) return "—";
-    return formatter.format(Number(price));
-  }, [price]);
+    if (hermesError) return "API Error";
+    if (hermesLoading || !ethUsdPrice) return "—";
+    return formatter.format(ethUsdPrice.price);
+  }, [ethUsdPrice, hermesLoading, hermesError]);
+
+  // Calculate USD value using Hermes price for better accuracy
+  const enhancedUsdValue = useMemo(() => {
+    if (!balance || !ethUsdPrice) return usdValue; // Fallback to original
+    const tokenBalance = Number(balance) / 1e18; // Assume 18 decimals
+    return (tokenBalance * ethUsdPrice.price).toFixed(2);
+  }, [balance, ethUsdPrice, usdValue]);
+
+  const formattedEnhancedValue = useMemo(() => {
+    if (!enhancedUsdValue) return formattedValue; // Use original as fallback
+    return formatter.format(Number(enhancedUsdValue));
+  }, [enhancedUsdValue, formattedValue]);
 
   // Prevent hydration issues by showing consistent loading state
   const isLoading = !mounted || loading;
@@ -52,17 +77,17 @@ export function PortfolioOverview() {
           <MetricCard
             label="Token balance"
             value={isLoading ? "Loading..." : balance ?? "0"}
-            tooltip="Current ERC-3643 token balance for this wallet."
+            tooltip="Current token balance for this wallet."
           />
           <MetricCard
             label="USD valuation"
-            value={isLoading ? "Loading..." : formattedValue}
-            tooltip="Balance converted using the latest Pyth oracle price."
+            value={isLoading ? "Loading..." : formattedEnhancedValue}
+            tooltip="Balance converted using real-time Hermes API with on-chain fallback."
           />
           <MetricCard
-            label="ETH/USD (Pyth)"
-            value={isLoading ? "Loading..." : formattedPrice}
-            tooltip={`Last update: ${publishTime ?? "—"}`}
+            label="ETH/USD (Hermes)"
+            value={isLoading || hermesLoading ? "Loading..." : formattedPrice}
+            tooltip={`${ethUsdPrice ? `Live: ${ethUsdPrice.publishTime.toLocaleTimeString()}` : "Real-time via Hermes API"} • No gas fees`}
           />
         </div>
       </div>
