@@ -27,8 +27,6 @@ const STEP_DETAILS: Record<ComplianceStep, { title: string; description: string 
 export function MockComplianceGate() {
   const [step, setStep] = useState<ComplianceStep>("profile");
 
-  const current = STEP_DETAILS[step];
-
   const advance = () => {
     if (step === "profile") setStep("kyc");
     else if (step === "kyc") setStep("accreditation");

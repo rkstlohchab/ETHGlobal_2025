@@ -8,6 +8,9 @@ export type MockAsset = {
   description: string;
   tags: string[];
   image: string;
+  offeringAddress: `0x${string}`;
+  tokenAddress: `0x${string}`;
+  targetRaiseWei: string;
 };
 
 export const MOCK_ASSETS: MockAsset[] = [
@@ -22,6 +25,9 @@ export const MOCK_ASSETS: MockAsset[] = [
       "Class A multifamily with 96 luxury units. Tokenized equity slice covers renovation CAPEX and quarterly distributions.",
     tags: ["multifamily", "tier-1 market", "cash-flow"],
     image: "https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80",
+    offeringAddress: process.env.NEXT_PUBLIC_SKYLINE_OFFERING as `0x${string}`,
+    tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`,
+    targetRaiseWei: "1000000000000000",
   },
   {
     id: "harbor",
@@ -34,6 +40,9 @@ export const MOCK_ASSETS: MockAsset[] = [
       "Triple-net industrial asset near Europe’s busiest port. Long-term lease to global shipping operator.",
     tags: ["industrial", "eu", "institutional"],
     image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    offeringAddress: process.env.NEXT_PUBLIC_HARBOR_OFFERING as `0x${string}`,
+    tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`,
+    targetRaiseWei: "1000000000000000",
   },
 ];
 

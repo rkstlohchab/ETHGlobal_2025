@@ -47,6 +47,8 @@ export function useTokenSnapshot() {
     args: address ? [address] : undefined,
     query: {
       enabled: Boolean(address && TOKEN_ADDRESS),
+      staleTime: 5_000,
+      gcTime: 30_000,
     },
   });
 
@@ -56,6 +58,8 @@ export function useTokenSnapshot() {
     functionName: "latestQuote",
     query: {
       enabled: Boolean(ADAPTER_ADDRESS),
+      staleTime: 5_000,
+      gcTime: 30_000,
     },
   });
 
