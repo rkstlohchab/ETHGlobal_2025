@@ -18,12 +18,14 @@ export function AssetBuyModal({ asset, open, onClose }: Props) {
     asset.tokenAddress
   );
 
+  const weiDecimals = useMemo(() => BigInt("1000000000000000000"), []);
+
   const cost = useMemo(() => {
     if (!pricePerToken || !tokens) return "0";
     const amount = parseEther(tokens);
-    const total = (amount * BigInt(pricePerToken.toString())) / 10n ** 18n;
+    const total = (amount * BigInt(pricePerToken.toString())) / weiDecimals;
     return formatEther(total);
-  }, [pricePerToken, tokens]);
+  }, [pricePerToken, tokens, weiDecimals]);
 
   const supplyLeft = useMemo(() => {
     if (!availableSupply) return "0";

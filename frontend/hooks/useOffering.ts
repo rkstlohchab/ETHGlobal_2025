@@ -3,6 +3,7 @@
 import { useReadContract, useAccount, useWriteContract } from "wagmi";
 import { useCallback } from "react";
 import { propertyOfferingAbi, erc20Abi } from "@/lib/abi";
+const WEI_DECIMALS = BigInt("1000000000000000000");
 
 export function useOffering(offeringAddress?: `0x${string}`, tokenAddress?: `0x${string}`) {
   const { address } = useAccount();
@@ -21,6 +22,13 @@ export function useOffering(offeringAddress?: `0x${string}`, tokenAddress?: `0x$
     query: { enabled: Boolean(offeringAddress) },
   });
 
+  const { data: availableSupply } = useReadContract({
+    address: offeringAddress,
+    abi: propertyOfferingAbi,
+    functionName: "availableSupply",
+    query: { enabled: Boolean(offeringAddress) },
+  });
+
   const { data: allowance } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -34,7 +42,7 @@ export function useOffering(offeringAddress?: `0x${string}`, tokenAddress?: `0x$
   const buy = useCallback(
     async (tokenAmount: bigint) => {
       if (!offeringAddress || !pricePerToken) return;
-      const cost = (tokenAmount * BigInt(pricePerToken.toString())) / 10n ** 18n;
+      const cost = (tokenAmount * BigInt(pricePerToken.toString())) / WEI_DECIMALS;
       await writeContractAsync({
         address: offeringAddress,
         abi: propertyOfferingAbi,
@@ -75,6 +83,7 @@ export function useOffering(offeringAddress?: `0x${string}`, tokenAddress?: `0x$
   return {
     pricePerToken,
     totalRaised,
+    availableSupply,
     allowance,
     buy,
     sell,
