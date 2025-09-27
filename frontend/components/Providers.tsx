@@ -13,24 +13,37 @@ import { ReactNode } from "react";
 
 const { wallets } = getDefaultWallets({
   appName: "RWA Token Demo",
-  projectId: "YOUR_PROJECT_ID", // can be random for localhost
+  projectId: "4bd2cf6cff63a8f25b77c2ef95f5c62e", // can be random for localhost
 });
-const hardhatChain = {
-  id: 31337,
-  name: "Hardhat",
-  network: "hardhat",
+
+// const hardhatChain = {
+//   id: 31337,
+//   name: "Hardhat",
+//   network: "hardhat",
+//   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+//   rpcUrls: {
+//     default: { http: ["http://127.0.0.1:8545"] },
+//     public: { http: ["http://127.0.0.1:8545"] },
+//   },
+//   testnet: true,
+// };
+
+const sepoliaChain = {
+  id: 11155111,
+  name: "Sepolia",
+  network: "sepolia",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
-    default: { http: ["http://127.0.0.1:8545"] },
-    public: { http: ["http://127.0.0.1:8545"] },
+    default: { http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? ""] },
+    public: { http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? ""] },
   },
   testnet: true,
 };
 
 const config = createConfig({
-  chains: [hardhatChain],
+  chains: [sepoliaChain],
   transports: {
-    [hardhatChain.id]: http("http://127.0.0.1:8545"),
+    [sepoliaChain.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? ""),
   },
 });
 

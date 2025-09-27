@@ -35,17 +35,5 @@ export const MOCK_ASSETS: MockAsset[] = [
     tags: ["industrial", "eu", "institutional"],
     image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
   },
-  {
-    id: "summit",
-    name: "Summit Eco Villas",
-    location: "Uttarakhand, India",
-    valuation: 3600000,
-    estimatedYield: 11.4,
-    tokensMinted: 360000,
-    description:
-      "Boutique mountain resort catering to luxury tourism. Tokenized debt tranche funds sustainable expansion.",
-    tags: ["hospitality", "emerging market", "green"],
-    image: "https://images.unsplash.com/photo-1532296093021-a57fc2ffcb97?auto=format&fit=crop&w=1200&q=80",
-  },
 ];
 

@@ -72,7 +72,7 @@ export function useTokenSnapshot() {
       } as const;
     }
 
-    const [quote] = quoteData as unknown as [{ price: bigint; decimals: number; publishTime: bigint }];
+    const quote = quoteData as unknown as { price: bigint; decimals: number; publishTime: bigint };
 
     const normalizedPrice = Number(quote.price) / 10 ** quote.decimals;
     const normalizedBalance = balanceData ? Number(balanceData) / 1e18 : 0; // assume 18 decimals for demo
