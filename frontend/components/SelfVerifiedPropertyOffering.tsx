@@ -15,7 +15,6 @@ interface SelfVerifiedPropertyOfferingProps {
 
 export function SelfVerifiedPropertyOffering({
   offeringAddress,
-  tokenAddress,
   propertyName,
   pricePerToken,
   availableTokens,

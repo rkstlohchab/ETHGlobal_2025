@@ -26,7 +26,7 @@ export function ConnectPanel() {
         <span className="text-sm font-medium text-slate-200">Wallet</span>
         <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
       </div>
-      {status === "connected" && (
+      {typeof window !== 'undefined' && status === "connected" && (
         <div className="space-y-1 text-xs text-slate-300">
           <div className="flex items-center gap-2">
             <span className="rounded bg-emerald-400/10 px-2 py-0.5 font-semibold text-emerald-300">
@@ -42,7 +42,7 @@ export function ConnectPanel() {
           </p>
         </div>
       )}
-      {status === "connected" && chains.length > 1 && (
+      {typeof window !== 'undefined' && status === "connected" && chains.length > 1 && (
         <div className="flex flex-wrap gap-2 pt-2">
           {chains.map((chain) => (
             <button

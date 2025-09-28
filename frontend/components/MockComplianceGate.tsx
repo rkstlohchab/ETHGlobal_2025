@@ -63,7 +63,7 @@ export function MockComplianceGate() {
     clearVerification();
   };
 
-  const handleSelfVerificationSuccess = (verificationData: any) => {
+  const handleSelfVerificationSuccess = (verificationData: Record<string, unknown>) => {
     console.log("Self verification completed:", verificationData);
     markAsVerified(verificationData);
     setShowSelfKyc(false);

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { getUniversalLink } from "@selfxyz/core";
 import {
   SelfQRcodeWrapper,
   SelfAppBuilder,
@@ -11,7 +10,7 @@ import {
 import { useAccount } from 'wagmi';
 
 interface SelfKycProps {
-  onVerificationSuccess?: (verificationData: any) => void;
+  onVerificationSuccess?: (verificationData: Record<string, unknown>) => void;
   onVerificationError?: (error: string) => void;
   propertyId?: string;
   minimumInvestment?: string;
@@ -24,9 +23,7 @@ export function SelfKyc({
   minimumInvestment 
 }: SelfKycProps) {
   const [selfApp, setSelfApp] = useState<SelfApp | null>(null);
-  const [universalLink, setUniversalLink] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [mounted, setMounted] = useState(false);
   
@@ -67,7 +64,7 @@ export function SelfKyc({
             countries.IRAN, 
             countries.NORTH_KOREA,
             countries.RUSSIA,
-            countries.SYRIA
+            countries.SYRIAN_ARAB_REPUBLIC
           ],
           
           // Required disclosures for KYC
@@ -79,8 +76,7 @@ export function SelfKyc({
         }
       }).build();
 
-      setSelfApp(app);
-      setUniversalLink(getUniversalLink(app));
+  setSelfApp(app);
     } catch (error) {
       console.error("Failed to initialize Self app:", error);
       setErrorMessage("Failed to initialize verification system");
@@ -88,10 +84,22 @@ export function SelfKyc({
     }
   }, [address, propertyId, minimumInvestment, mounted]);
 
-  const handleSuccessfulVerification = useCallback(async (verificationData: any) => {
-    console.log("Self verification successful:", verificationData);
-    setIsVerifying(false);
+  const handleSuccessfulVerification = useCallback(async () => {
+    console.log("Self verification successful");
     setVerificationStatus('success');
+    let verificationData: Record<string, unknown> | undefined;
+    if (address) {
+      try {
+        const response = await fetch(`/api/verify?address=${address}`);
+        if (response.ok) {
+          verificationData = await response.json();
+        } else {
+          console.warn("Failed to fetch verification status", response.status);
+        }
+      } catch (fetchError) {
+        console.error("Failed to retrieve verification status:", fetchError);
+      }
+    }
     
     // Store verification status in localStorage for persistence
     if (address) {
@@ -103,22 +111,16 @@ export function SelfKyc({
       }));
     }
     
-    onVerificationSuccess?.(verificationData);
+    onVerificationSuccess?.(verificationData ?? {});
   }, [address, propertyId, onVerificationSuccess]);
 
-  const handleVerificationError = useCallback((error: any) => {
+  const handleVerificationError = useCallback((error: Error | unknown) => {
     console.error("Self verification error:", error);
-    setIsVerifying(false);
     setVerificationStatus('error');
-    setErrorMessage(error?.message || "Verification failed");
-    onVerificationError?.(error?.message || "Verification failed");
+    const errorMessage = error instanceof Error ? error.message : "Verification failed";
+    setErrorMessage(errorMessage);
+    onVerificationError?.(errorMessage);
   }, [onVerificationError]);
-
-  const handleQRCodeScan = useCallback(() => {
-    setIsVerifying(true);
-    setVerificationStatus('pending');
-    setErrorMessage('');
-  }, []);
 
   if (!mounted) {
     return (
@@ -230,14 +232,11 @@ export function SelfKyc({
                 selfApp={selfApp}
                 onSuccess={handleSuccessfulVerification}
                 onError={handleVerificationError}
-                onScan={handleQRCodeScan}
               />
             </div>
             
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-200">
-                {isVerifying ? "Processing verification..." : "Scan with Self app"}
-              </p>
+              <p className="text-sm font-medium text-slate-200">Scan with Self app</p>
               <p className="mt-1 text-xs text-slate-400">
                 Download the Self app from your app store to get started
               </p>

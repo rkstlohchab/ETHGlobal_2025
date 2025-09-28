@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { countries, SelfQRcodeWrapper } from '@selfxyz/qrcode'
+import { countries, SelfQRcodeWrapper, type SelfApp } from '@selfxyz/qrcode'
 import { SelfAppBuilder } from '@selfxyz/qrcode'
 
 export default function Verify() {
-  const [selfApp, setSelfApp] = useState<any | null>(null)
+  const [selfApp, setSelfApp] = useState<SelfApp | null>(null)
 
   useEffect(() => {
     const userId = '0xYourUserEthAddress' // or a UUID depending on your setup

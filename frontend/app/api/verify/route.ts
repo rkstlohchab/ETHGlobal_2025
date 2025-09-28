@@ -12,14 +12,55 @@ const selfBackendVerifier = new SelfBackendVerifier(
     minimumAge: 18,
     excludedCountries: ["CUB", "IRN", "PRK", "RUS", "SYR"], // Sanctioned countries
     ofac: true, // OFAC sanctions check
-    nationality: true,
-    gender: true,
   }),
   "hex" // userIdentifierType for Ethereum addresses
 );
 
 // In-memory store for verification results (use Redis/database in production)
-const verificationStore = new Map<string, any>();
+type VerificationResponse = Awaited<ReturnType<typeof selfBackendVerifier.verify>>;
+type DiscloseOutput = VerificationResponse["discloseOutput"];
+
+interface VerificationData {
+  verified: boolean;
+  timestamp: number;
+  compliance: {
+    ageVerified: boolean;
+    geographicCompliant: boolean;
+    ofacClean: boolean;
+    kycComplete: boolean;
+  };
+  credentialSubject: DiscloseOutput;
+  forbiddenCountries: VerificationResponse["forbiddenCountriesList"];
+}
+
+const verificationStore = new Map<string, VerificationData>();
+
+const parseMinimumAge = (value: DiscloseOutput["minimumAge"]) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+};
+
+const normalizeOfac = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.filter((flag): flag is boolean => typeof flag === "boolean");
+  }
+  if (typeof value === "boolean") {
+    return [value];
+  }
+  return [];
+};
+
+const deriveCompliance = (verification: VerificationResponse) => {
+  const minimumAge = parseMinimumAge(verification.discloseOutput?.minimumAge);
+  const ofacStatus = normalizeOfac(verification.discloseOutput?.ofac);
+
+  return {
+    ageVerified: minimumAge !== undefined ? minimumAge >= 18 : false,
+    geographicCompliant: !verification.forbiddenCountriesList?.length,
+    ofacClean: ofacStatus.length === 0 ? true : ofacStatus.every((flag) => flag),
+    kycComplete: true,
+  } as VerificationData["compliance"];
+};
 
 export async function POST(req: Request) {
   try {
@@ -75,19 +116,18 @@ export async function POST(req: Request) {
 
     // Check if verification was successful
     if (result.isValidDetails.isValid) {
+      const compliance = deriveCompliance(result);
       // Extract wallet address from user context or public signals
       const walletAddress = parsedUserData.userId || parsedUserData.walletAddress;
       
       // Store verification result for future reference
       if (walletAddress) {
-        const verificationRecord = {
-          address: walletAddress,
+        const verificationRecord: VerificationData = {
           verified: true,
           timestamp: Date.now(),
-          attestationId,
+          compliance,
           credentialSubject: result.discloseOutput,
-          propertyId: parsedUserData.propertyId || 'general',
-          platform: parsedUserData.platform || 'RWA Property Platform'
+          forbiddenCountries: result.forbiddenCountriesList,
         };
         
         verificationStore.set(walletAddress.toLowerCase(), verificationRecord);
@@ -101,12 +141,8 @@ export async function POST(req: Request) {
         verified: true,
         timestamp: Date.now(),
         credentialSubject: result.discloseOutput,
-        compliance: {
-          ageVerified: result.discloseOutput.minimumAge >= 18,
-          geographicCompliant: !result.discloseOutput.excludedCountries?.length,
-          ofacClean: result.discloseOutput.ofac !== false,
-          kycComplete: true
-        },
+        forbiddenCountries: result.forbiddenCountriesList,
+        compliance,
         message: "Identity verification completed successfully"
       });
     } else {
@@ -160,15 +196,11 @@ export async function GET(req: Request) {
     
     if (verification) {
       return NextResponse.json({
-        verified: true,
+        verified: verification.verified,
         timestamp: verification.timestamp,
-        propertyId: verification.propertyId,
-        compliance: {
-          ageVerified: verification.credentialSubject.minimumAge >= 18,
-          geographicCompliant: !verification.credentialSubject.excludedCountries?.length,
-          ofacClean: verification.credentialSubject.ofac !== false,
-          kycComplete: true
-        }
+        credentialSubject: verification.credentialSubject,
+        forbiddenCountries: verification.forbiddenCountries,
+        compliance: verification.compliance,
       });
     } else {
       return NextResponse.json({
